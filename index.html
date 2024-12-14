@@ -264,18 +264,24 @@
 getDeviceStorage();
     // Get the number of cameras
     function getCameras() {
-                navigator.mediaDevices.enumerateDevices()
-                    .then(devices => {
-                        const cameras = devices.filter(device => device.kind === 'videoinput');
-                        document.getElementById('num-cameras').textContent = cameras.length > 0 ? cameras.length : "No cameras detected.";
-                    })
-                    .catch(err => {
-                        console.log("Error detecting cameras:", err);
-                        document.getElementById('num-cameras').textContent = "Error detecting cameras.";
-                    });
-            }
+    navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+            // Filter out devices with kind 'videoinput' (cameras)
+            const cameras = devices.filter(device => device.kind === 'videoinput');
+            const cameraList = cameras.map(camera => camera.label || "Unnamed Camera");
+            // Display the number of cameras and their labels
+            document.getElementById('num-cameras').textContent = cameraList.length > 0 
+                ? `Number of cameras: ${cameraList.length}. Cameras: ${cameraList.join(', ')}`
+                : "No cameras detected.";
+        })
+        .catch(err => {
+            console.log("Error detecting cameras:", err);
+            document.getElementById('num-cameras').textContent = "Error detecting cameras.";
+        });
+}
 
-            getCameras();
+getCameras();
+
       
     </script>
 </body>
