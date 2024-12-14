@@ -261,18 +261,18 @@
     }
 }
 
-getDeviceStorage();
-    // Get the number of cameras
-    function getCameras() {
+function getCameras() {
     navigator.mediaDevices.enumerateDevices()
         .then(devices => {
-            // Filter out devices with kind 'videoinput' (cameras)
+            // Filter out devices of kind 'videoinput' (cameras)
             const cameras = devices.filter(device => device.kind === 'videoinput');
-            const cameraList = cameras.map(camera => camera.label || "Unnamed Camera");
-            // Display the number of cameras and their labels
-            document.getElementById('num-cameras').textContent = cameraList.length > 0 
-                ? `Number of cameras: ${cameraList.length}. Cameras: ${cameraList.join(', ')}`
-                : "No cameras detected.";
+            
+            if (cameras.length > 0) {
+                let cameraList = cameras.map(camera => camera.label || "Unnamed Camera");
+                document.getElementById('num-cameras').textContent = `Number of cameras: ${cameras.length}. Cameras: ${cameraList.join(', ')}`;
+            } else {
+                document.getElementById('num-cameras').textContent = "No cameras detected.";
+            }
         })
         .catch(err => {
             console.log("Error detecting cameras:", err);
@@ -280,7 +280,22 @@ getDeviceStorage();
         });
 }
 
-getCameras();
+// Request access to the cameras and detect available ones
+function requestCameraPermissions() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately after access
+            getCameras(); // Call getCameras after permission is granted
+        })
+        .catch(err => {
+            console.error("Permission denied or error accessing camera:", err);
+            document.getElementById('num-cameras').textContent = "Error accessing camera.";
+        });
+}
+
+// Call the function to request permissions
+requestCameraPermissions();
+
 
       
     </script>
