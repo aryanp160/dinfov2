@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Info</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Your Device Info</h1>
+        <div id="device-info">
+            <p><strong>Operating System:</strong> <span id="os"></span></p>
+            <p><strong>Browser:</strong> <span id="browser"></span></p>
+            <p><strong>Screen Resolution:</strong> <span id="resolution"></span></p>
+            <p><strong>Device Type:</strong> <span id="device-type"></span></p>
+            <p><strong>IP Address:</strong> <span id="ip-address"></span></p>
+            <p><strong>GPU Renderer:</strong> <span id="gpu"></span></p>
+            <p><strong>Device Memory (GB):</strong> <span id="memory"></span></p>
+            <p><strong>Battery Level:</strong> <span id="battery"></span></p>
+            <p><strong>Timezone:</strong> <span id="timezone"></span></p>
+            <p><strong>Connection Type:</strong> <span id="connection-type"></span></p>
+            <p><strong>Device Orientation:</strong> <span id="orientation"></span></p>
+            <p><strong>CPU Cores:</strong> <span id="cpu-cores"></span></p>
+            <p><strong>Touch Device:</strong> <span id="touch-device"></span></p>
+            <p><strong>Bluetooth Version:</strong> <span id="bluetooth-version"></span></p>
+            <p><strong>Number of Speakers:</strong> <span id="num-speakers"></span></p>
+            <p><strong>Number of Microphones:</strong> <span id="num-microphones"></span></p>
+            <p><strong>Device Pointing Method:</strong> <span id="pointing-method"></span></p>
+            <p><strong>Browser Plugins:</strong> <span id="browser-plugins"></span></p>
+            <p><strong>HTTP/TLS/SSL Version:</strong> <span id="ssl-version"></span></p>
+            <p><strong>Private Browsing Mode:</strong> <span id="private-browsing"></span></p>
+            <p><strong>Screen Orientation:</strong> <span id="screen-orientation"></span></p>
+            <p><strong>Aspect Ratio:</strong> <span id="aspect-ratio"></span></p>
+            <p><strong>Color Depth:</strong> <span id="color-depth"></span></p>
+            <p><strong>Device Storage:</strong> <span id="device-storage"></span></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@0.7.28/dist/ua-parser.min.js"></script>
+    <script>
+        window.onload = function() {
+            // Detecting device details
+            const os = navigator.platform;
+            const userAgent = navigator.userAgent;
+            const parser = new UAParser();
+            const result = parser.getResult();
+            const browser = result.browser.name;
+            const resolution = `${window.screen.width}x${window.screen.height}`;
+            const deviceType = /Mobi|Android/i.test(userAgent) ? "Mobile" : "Desktop";
+
+            // Get GPU info
+            function getGPUInfo() {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                return { renderer, vendor };
+            }
+
+            const gpuInfo = getGPUInfo();
+            const gpu = `${gpuInfo.vendor} - ${gpuInfo.renderer}`;
+
+            // Get device memory
+            const memory = navigator.deviceMemory || 'Unknown';
+
+            // Battery information
+            navigator.getBattery().then(function(battery) {
+                document.getElementById('battery').textContent = battery.level * 100 + "%";
+            });
+
+            // Timezone information
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            // Connection type
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            const connectionType = connection ? connection.effectiveType : 'unknown';
+
+            // Device Orientation
+            const orientation = window.screen.orientation ? window.screen.orientation.type : "unknown";
+
+            // CPU cores
+            const cores = navigator.hardwareConcurrency;
+
+            // Touch device
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+            // Display the info in HTML
+            document.getElementById('os').textContent = os;
+            document.getElementById('browser').textContent = browser;
+            document.getElementById('resolution').textContent = resolution;
+            document.getElementById('device-type').textContent = deviceType;
+            document.getElementById('gpu').textContent = gpu;
+            document.getElementById('memory').textContent = memory;
+            document.getElementById('timezone').textContent = timezone;
+            document.getElementById('connection-type').textContent = connectionType;
+            document.getElementById('orientation').textContent = orientation;
+            document.getElementById('cpu-cores').textContent = cores;
+            document.getElementById('touch-device').textContent = isTouchDevice;
+
+            // Fetch IP Address using a public API
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ip-address').textContent = data.ip;
+                });
+
+                function checkBluetooth() {
+                if (navigator.bluetooth) {
+                    navigator.bluetooth.getAvailability().then(function(isAvailable) {
+                        if (isAvailable) {
+                            document.getElementById('bluetooth-version').textContent = "Bluetooth is supported.";
+                        } else {
+                            document.getElementById('bluetooth-version').textContent = "Bluetooth is not available.";
+                        }
+                    }).catch(function() {
+                        document.getElementById('bluetooth-version').textContent = "Unable to check Bluetooth version.";
+                    });
+                } else {
+                    document.getElementById('bluetooth-version').textContent = "Bluetooth is not supported.";
+                }
+            }
+
+            checkBluetooth();
+
+            // Get the number of speakers
+            function getSpeakers() {
+                navigator.mediaDevices.enumerateDevices()
+                    .then(devices => {
+                        const speakers = devices.filter(device => device.kind === 'audiooutput');
+                        document.getElementById('num-speakers').textContent = speakers.length > 0 ? speakers.length : "No speakers detected.";
+                    })
+                    .catch(err => {
+                        console.log("Error detecting speakers:", err);
+                        document.getElementById('num-speakers').textContent = "Error detecting speakers.";
+                    });
+            }
+
+            getSpeakers();
+
+            // Get the number of microphones
+            function getMicrophones() {
+                navigator.mediaDevices.enumerateDevices()
+                    .then(devices => {
+                        const microphones = devices.filter(device => device.kind === 'audioinput');
+                        document.getElementById('num-microphones').textContent = microphones.length > 0 ? microphones.length : "No microphones detected.";
+                    })
+                    .catch(err => {
+                        console.log("Error detecting microphones:", err);
+                        document.getElementById('num-microphones').textContent = "Error detecting microphones.";
+                    });
+            }
+
+            getMicrophones();
+        };
+        function getPointingMethod() {
+                if ('ontouchstart' in window) {
+                    if (navigator.maxTouchPoints > 1) {
+                        document.getElementById('pointing-method').textContent = "Touchscreen (multi-touch)";
+                    } else {
+                        document.getElementById('pointing-method').textContent = "Touchscreen (single-touch)";
+                    }
+                } else if ('onmouse' in window) {
+                    document.getElementById('pointing-method').textContent = "Mouse or Trackpad";
+                } else {
+                    document.getElementById('pointing-method').textContent = "Pointing method unknown";
+                }
+            }
+
+            getPointingMethod();
+
+            // Browser Plugins Detection
+            function getBrowserPlugins() {
+                const plugins = navigator.plugins;
+                if (plugins.length > 0) {
+                    let pluginList = [];
+                    for (let i = 0; i < plugins.length; i++) {
+                        pluginList.push(plugins[i].name);
+                    }
+                    document.getElementById('browser-plugins').textContent = pluginList.join(", ");
+                } else {
+                    document.getElementById('browser-plugins').textContent = "No plugins detected.";
+                }
+            }
+
+            getBrowserPlugins();
+
+            // HTTP/TLS/SSL Version Detection (via Performance API)
+            function getTLSVersion() {
+                const protocol = window.location.protocol;
+                if (protocol === 'https:') {
+                    fetch('/').then(function(response) {
+                        const tlsVersion = response.connection ? response.connection.encryptedProtocol : 'Unknown';
+                        document.getElementById('ssl-version').textContent = `TLS/SSL version: ${tlsVersion}`;
+                    }).catch(function() {
+                        document.getElementById('ssl-version').textContent = "TLS/SSL version: Unknown";
+                    });
+                } else {
+                    document.getElementById('ssl-version').textContent = "Page is not served over HTTPS.";
+                }
+            }
+
+            getTLSVersion();
+
+            // Check if in Private Browsing Mode
+            function checkPrivateBrowsing() {
+                const testStorage = "testStorage";
+                try {
+                    localStorage.setItem(testStorage, testStorage);
+                    localStorage.removeItem(testStorage);
+                    document.getElementById('private-browsing').textContent = "Private browsing mode is OFF.";
+                } catch (e) {
+                    document.getElementById('private-browsing').textContent = "Private browsing mode is ON.";
+                }
+            }
+
+            checkPrivateBrowsing();
+
+            // Get Screen Orientation
+            function getScreenOrientation() {
+                if (window.screen.orientation) {
+                    document.getElementById('screen-orientation').textContent = window.screen.orientation.type;
+                } else {
+                    document.getElementById('screen-orientation').textContent = "Screen orientation API is not supported.";
+                }
+            }
+
+            getScreenOrientation();
+
+            // Get Aspect Ratio
+            function getAspectRatio() {
+                const aspectRatio = (window.innerWidth / window.innerHeight).toFixed(2);
+                document.getElementById('aspect-ratio').textContent = `${aspectRatio}:1`;
+            }
+
+            getAspectRatio();
+
+            // Get Color Depth
+            function getColorDepth() {
+                const colorDepth = window.screen.colorDepth;
+                document.getElementById('color-depth').textContent = `${colorDepth}-bit`;
+            }
+
+            getColorDepth();
+
+            // Get Device Storage (available space)
+            function getDeviceStorage() {
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    navigator.storage.estimate().then(estimate => {
+                        const total = (estimate.quota / (1024 * 1024 * 1024)).toFixed(2); // GB
+                        const used = ((estimate.usage) / (1024 * 1024 * 1024)).toFixed(2); // GB
+                        document.getElementById('device-storage').textContent = `${used} GB used of ${total} GB`;
+                    }).catch(err => {
+                        document.getElementById('device-storage').textContent = "Error retrieving storage information.";
+                    });
+                } else {
+                    document.getElementById('device-storage').textContent = "Storage API not supported.";
+                }
+            }
+
+            getDeviceStorage();
+      
+    </script>
+</body>
+</html>
