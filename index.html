@@ -34,6 +34,7 @@
             <p><strong>Aspect Ratio:</strong> <span id="aspect-ratio"></span></p>
             <p><strong>Color Depth:</strong> <span id="color-depth"></span></p>
             <p><strong>Device Storage:</strong> <span id="device-storage"></span></p>
+            <p><strong>Number of Cameras:</strong> <span id="num-cameras"></span></p>
         </div>
     </div>
 
@@ -246,20 +247,35 @@
 
             // Get Device Storage (available space)
             function getDeviceStorage() {
-                if ('storage' in navigator && 'estimate' in navigator.storage) {
-                    navigator.storage.estimate().then(estimate => {
-                        const total = (estimate.quota / (1024 * 1024 * 1024)).toFixed(2); // GB
-                        const used = ((estimate.usage) / (1024 * 1024 * 1024)).toFixed(2); // GB
-                        document.getElementById('device-storage').textContent = `${used} GB used of ${total} GB`;
-                    }).catch(err => {
-                        document.getElementById('device-storage').textContent = "Error retrieving storage information.";
+    if (navigator.storage && navigator.storage.estimate) {
+        navigator.storage.estimate().then(estimate => {
+            const total = (estimate.quota / (1024 * 1024 * 1024)).toFixed(2); // GB
+            const used = (estimate.usage / (1024 * 1024 * 1024)).toFixed(2); // GB
+            document.getElementById('device-storage').textContent = `${used} GB used of ${total} GB`;
+        }).catch(err => {
+            console.error("Error retrieving storage information:", err);
+            document.getElementById('device-storage').textContent = "Error retrieving storage information.";
+        });
+    } else {
+        document.getElementById('device-storage').textContent = "Storage API not supported in this browser.";
+    }
+}
+
+getDeviceStorage();
+    // Get the number of cameras
+    function getCameras() {
+                navigator.mediaDevices.enumerateDevices()
+                    .then(devices => {
+                        const cameras = devices.filter(device => device.kind === 'videoinput');
+                        document.getElementById('num-cameras').textContent = cameras.length > 0 ? cameras.length : "No cameras detected.";
+                    })
+                    .catch(err => {
+                        console.log("Error detecting cameras:", err);
+                        document.getElementById('num-cameras').textContent = "Error detecting cameras.";
                     });
-                } else {
-                    document.getElementById('device-storage').textContent = "Storage API not supported.";
-                }
             }
 
-            getDeviceStorage();
+            getCameras();
       
     </script>
 </body>
